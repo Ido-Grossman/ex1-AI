@@ -14,22 +14,32 @@ def huristic_function(lat1, lon1, lat2, lon2):
     return distance / 110
 
 
-def find_rout(source, target, mode, roads):
+def find_rout(source, target, mode, roads, limit):
     import heapq
     # loading the roads from the map.
     # creating the closed nodes list.
     closed = set()
     # creating the opened nodes list and adding the first node, where 0 is the cost to it, and -1 is the parent.
-    opened = [(0, roads[source], -1)]
+    opened = []
+    source_node, target_node = roads[source], roads[target]
+    if mode == 'ucs':
+        opened.append((0, source_node, -1))
+    else:
+        opened.append((huristic_function(source_node[1], source_node[2], target_node[1], target_node[2]),
+                       source_node, -1))
     # creating a map of parents and putting source and target parents as -1, the algorithm will later change the target
     # parent.
     parents = {source: -1, target: -1}
-    cost = 0
-    target_node = roads[target]
+    cost, count = 0, 0
+    min_index = 0
     while opened:
         next_node = heapq.heappop(opened)
         min_cost, parent, next_node = next_node[0], next_node[2], next_node[1]
         node_index = next_node[0]
+        if mode == 'idastar' and next_node[0] > limit:
+            count += 1
+            if count == 2:
+                return next_node[0]
         parents[node_index] = parent
         closed.add(node_index)
         links = next_node[3]
@@ -58,6 +68,8 @@ def find_rout(source, target, mode, roads):
                     heapq.heappush(opened, old_node)
                 else:
                     heapq.heappush(opened, (new_cost, target_junc, node_index))
+    if parents[target] == -1:
+        return min_index, cost
     path = [target]
     parent = parents[target]
     while parent != -1:
@@ -68,20 +80,29 @@ def find_rout(source, target, mode, roads):
 
 def find_ucs_rout(source, target):
     roads = ways.load_map_from_csv()
-    path, cost = find_rout(source, target, 'ucs', roads)
+    path, cost = find_rout(source, target, 'ucs', roads, 0)
     print(cost)
     return path
 
 
 def find_astar_route(source, target):
     roads = ways.load_map_from_csv()
-    path, cost = find_rout(source, target, 'astar', roads)
+    path, cost = find_rout(source, target, 'astar', roads, 0)
     print(cost)
     return path
 
 
 def find_idastar_route(source, target):
-    raise NotImplementedError
+    roads = ways.load_map_from_csv()
+    cost = 0
+    lim = huristic_function(roads[source][1], roads[source][2], roads[target][1], roads[target][2])
+    while cost == 0:
+        try:
+            path, cost = find_rout(source, target, 'idastar', roads, lim)
+            print(cost)
+            return path
+        except:
+            lim = find_rout(source, target, 'idastar', roads, lim)
 
 
 def dispatch(argv):
