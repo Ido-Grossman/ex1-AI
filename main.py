@@ -23,10 +23,10 @@ def find_rout(source, target, mode, roads, limit):
     opened = []
     source_node, target_node = roads[source], roads[target]
     if mode == 'ucs':
-        opened.append((0, source_node, -1))
+        opened.append((0, source_node, -1, 0))
     else:
         opened.append((huristic_function(source_node[1], source_node[2], target_node[1], target_node[2]),
-                       source_node, -1))
+                       source_node, -1, 0))
     # creating a map of parents and putting source and target parents as -1, the algorithm will later change the target
     # parent.
     parents = {source: -1, target: -1}
@@ -34,7 +34,7 @@ def find_rout(source, target, mode, roads, limit):
     min_index = 0
     while opened:
         next_node = heapq.heappop(opened)
-        min_cost, parent, next_node = next_node[0], next_node[2], next_node[1]
+        prev_cost, parent, prev_huristics, next_node = next_node[0], next_node[2], next_node[3], next_node[1]
         node_index = next_node[0]
         if mode == 'idastar' and next_node[0] > limit:
             count += 1
@@ -44,15 +44,17 @@ def find_rout(source, target, mode, roads, limit):
         closed.add(node_index)
         links = next_node[3]
         if target == node_index:
-            cost = min_cost
+            cost = prev_cost
             break
         for link in links:
             if not link[1] in closed:
                 target_junc = roads[link[1]]
+                h, g = 0, prev_cost
                 if mode == 'ucs':
-                    f = min_cost
+                    h = 0
                 else:
-                    f = min_cost + huristic_function(next_node[1], next_node[2], target_node[1], target_node[2])
+                    h = huristic_function(target_junc[1], target_junc[2], target_node[1], target_node[2])
+                f = g + h - prev_huristics
                 new_cost = link[2] + f
                 found = False
                 index = 0
@@ -64,10 +66,10 @@ def find_rout(source, target, mode, roads, limit):
                 if found:
                     old_node = opened.pop(index)
                     if new_cost < old_node[0]:
-                        old_node = (new_cost, old_node[1], node_index)
+                        old_node = (new_cost, old_node[1], node_index, h)
                     heapq.heappush(opened, old_node)
                 else:
-                    heapq.heappush(opened, (new_cost, target_junc, node_index))
+                    heapq.heappush(opened, (new_cost, target_junc, node_index, h))
     if parents[target] == -1:
         return min_index, cost
     path = [target]
