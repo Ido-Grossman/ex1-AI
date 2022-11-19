@@ -1,3 +1,4 @@
+# Ido Grossman 208985424
 '''
 This file should be runnable to print map_statistics using 
 $ python stats.py

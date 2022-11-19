@@ -1,3 +1,4 @@
+# Ido Grossman 208985424
 '''Constants - details about the map.
 accessible using "import ways.info'''
 

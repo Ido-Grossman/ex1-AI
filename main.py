@@ -1,3 +1,4 @@
+# Ido Grossman 208985424
 '''
 Parse input and run appropriate code.
 Don't use this file for the actual work; only minimal code should be here.
@@ -15,6 +16,8 @@ def huristic_function(lat1, lon1, lat2, lon2):
     distance = tools.compute_distance(lat1, lon1, lat2, lon2)
     return distance / 110
 
+
+@tools.timed
 def find_rout(source, target, mode, roads):
     import heapq
     from ways import info
@@ -131,8 +134,8 @@ def DFSF(state, g, path, f_limit, goal, roads):
     return None
 
 
-def find_idastar_route(source, target):
-    roads = graph.load_map_from_csv()
+@tools.timed
+def idastar_algo(source, target, roads):
     global new_limit
     # Sets the state and goal node from the roads.
     source_node, target_node = roads[source], roads[target]
@@ -147,6 +150,11 @@ def find_idastar_route(source, target):
         sol = DFSF(source, 0, [source], f_limit, target, roads)
         if sol:
             return sol
+
+
+def find_idastar_route(source, target):
+    roads = graph.load_map_from_csv()
+    return idastar_algo(source, target, roads)
 
 
 def dispatch(argv):
